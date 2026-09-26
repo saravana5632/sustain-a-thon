@@ -218,6 +218,3 @@ The long-term vision is to create a scalable buyer-validation platform that enab
 ## License
 
 This project was developed as part of **Sustain-a-thon 2026** by **Impact Coders**.
-
-```
-```
