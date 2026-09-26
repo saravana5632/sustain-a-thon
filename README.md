@@ -207,17 +207,14 @@ The long-term vision is to create a scalable buyer-validation platform that enab
 
 ## Authors
  
- **Sabarish R**
+ [**Sabarish R**](https://github.com/sabarishj)
 
- **Manoj R**
+ [**Manoj R**](https://github.com/MANOJ230527)
 
- **Mohammed Aaseef M**
+ [**Mohammed Aaseef M**](https://github.com/mmohamedaaseef-cloud)
 
- **Saravanakumar G**
+ [**Saravanakumar G**](https://github.com/saravana5632)
 
 ## License
 
 This project was developed as part of **Sustain-a-thon 2026** by **Impact Coders**.
-
-```
-```
