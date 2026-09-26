@@ -1,0 +1,6 @@
+{
+  "name": "PaySure AI — B2B Buyer Payment Confidence Platform",
+  "description": "Know the buyer before you commit. Evaluate potential B2B buyers using commercial and behavioural signals to generate an explainable Buyer Payment Confidence Score, risk level, and counterfactual What-If simulation.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
