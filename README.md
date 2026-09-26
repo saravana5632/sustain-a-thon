@@ -1,7 +1,6 @@
-# BuyerProof AI
+# BuyerProof AI 🎯
 
 > **Validate the buyer before investing in the business.**
-
 BuyerProof AI is an AI-powered buyer validation platform designed to help businesses determine whether customer interest is likely to convert into an actual purchase.
 
 The platform analyzes customer responses and behavioural signals to identify genuine purchase intent, estimate willingness to pay, and provide actionable insights before a business commits significant development, marketing, or financial resources.
