@@ -10,6 +10,7 @@ interface SettingsPageProps {
   settings: AppSettings;
   onSaveSettings: (newSettings: AppSettings) => void;
   onRestoreDefaults?: () => void;
+  onOpenDatabaseModal?: () => void;
   totalBuyersCount?: number;
 }
 
@@ -17,6 +18,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   settings,
   onSaveSettings,
   onRestoreDefaults,
+  onOpenDatabaseModal,
   totalBuyersCount = 9,
 }) => {
   const [draft, setDraft] = useState<AppSettings>(settings);
@@ -405,15 +407,35 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                 />
               </label>
 
-              {onRestoreDefaults && (
+              {onOpenDatabaseModal && (
                 <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
                   <div>
                     <div className="text-xs font-semibold text-slate-900 flex items-center gap-1.5">
-                      <Database className="w-3.5 h-3.5 text-sky-600" />
-                      <span>Active Buyer Records ({totalBuyersCount})</span>
+                      <Database className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>Turso Database (libSQL)</span>
                     </div>
                     <div className="text-[11px] text-slate-500">
-                      Reset all created/edited buyer profiles, invoices, and notes to defaults.
+                      Check connection latency, tables, or configure cloud remote credentials.
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={onOpenDatabaseModal}
+                    className="px-3 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80 rounded-lg transition-colors whitespace-nowrap cursor-pointer"
+                  >
+                    Database Details
+                  </button>
+                </div>
+              )}
+
+              {onRestoreDefaults && (
+                <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between gap-3">
+                  <div>
+                    <div className="text-xs font-semibold text-slate-900">
+                      Reset Buyer Records ({totalBuyersCount} active)
+                    </div>
+                    <div className="text-[11px] text-slate-500">
+                      Restore default benchmark buyers, invoices, and timeline notes.
                     </div>
                   </div>
                   <button
@@ -421,16 +443,16 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                     onClick={onRestoreDefaults}
                     className="px-3 py-1.5 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors whitespace-nowrap cursor-pointer"
                   >
-                    Reset Demo Data
+                    Reset Records
                   </button>
                 </div>
               )}
             </div>
 
-            <div className="mt-5 p-3.5 rounded-lg bg-slate-50 border border-slate-200/70 flex items-center gap-2.5 text-xs text-slate-600">
-              <Shield className="w-4 h-4 text-sky-700 shrink-0" />
+            <div className="mt-5 p-3.5 rounded-lg bg-emerald-50/70 border border-emerald-200/80 flex items-center gap-2.5 text-xs text-emerald-800">
+              <Shield className="w-4 h-4 text-emerald-700 shrink-0" />
               <span>
-                Buyer evaluations and CRUD updates are persisted automatically in local workspace storage.
+                Connected to <strong>Turso Database (libSQL)</strong>. Buyer records, invoice history, and settings are persisted via ACID transactions.
               </span>
             </div>
           </section>

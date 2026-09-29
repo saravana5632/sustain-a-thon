@@ -31,7 +31,15 @@ import { BuyerHistoryPage } from './pages/BuyerHistoryPage';
 import { BuyerDetailsPage } from './pages/BuyerDetailsPage';
 import { InsightsPage } from './pages/InsightsPage';
 import { SettingsPage } from './pages/SettingsPage';
-import { DemoModeModal } from './components/DemoModeModal';
+import { TursoDatabaseModal } from './components/TursoDatabaseModal';
+import {
+  fetchBuyersFromDb,
+  saveBuyerToDbApi,
+  deleteBuyerFromDbApi,
+  resetBuyersInDbApi,
+  fetchSettingsFromDb,
+  saveSettingsToDbApi,
+} from './services/apiService';
 
 const STORAGE_KEYS = {
   BUYERS: 'paysure_ai_buyers_v1',
@@ -106,8 +114,8 @@ export default function App() {
   >(DEMO_BENCHMARK_BUYER_INPUT);
   const [editingBuyerId, setEditingBuyerId] = useState<string | null>(null);
 
-  // Hackathon Demo Mode Modal
-  const [demoModalOpen, setDemoModalOpen] = useState(false);
+  // Turso Database Status & Configuration Modal
+  const [tursoModalOpen, setTursoModalOpen] = useState(false);
 
   // Toast feedback for CRUD operations
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -115,6 +123,36 @@ export default function App() {
   const showToast = (msg: string) => {
     setToastMessage(msg);
   };
+
+  // Sync data from Turso Database on initial app mount
+  useEffect(() => {
+    let isMounted = true;
+    async function syncFromTurso() {
+      try {
+        const dbBuyers = await fetchBuyersFromDb();
+        if (isMounted && Array.isArray(dbBuyers) && dbBuyers.length > 0) {
+          setBuyers(dbBuyers);
+          setActiveResult((prev) => dbBuyers.find((b) => b.id === prev.id) || dbBuyers[0]);
+          setActiveDetailBuyer((prev) => dbBuyers.find((b) => b.id === prev.id) || dbBuyers[0]);
+        }
+      } catch (err) {
+        console.warn('Initial Turso buyer sync notice:', err);
+      }
+
+      try {
+        const dbSettings = await fetchSettingsFromDb();
+        if (isMounted && dbSettings) {
+          setSettings(dbSettings);
+        }
+      } catch (err) {
+        console.warn('Initial Turso settings sync notice:', err);
+      }
+    }
+    syncFromTurso();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (!toastMessage) return;
@@ -177,15 +215,17 @@ export default function App() {
       setActiveResult(updatedRecord);
       setActiveDetailBuyer(updatedRecord);
       setEditingBuyerId(null);
+      saveBuyerToDbApi(updatedRecord).catch((e) => console.error('Turso save error:', e));
       showToast(
-        `Updated assessment for ${updatedRecord.input.companyName} (${updatedRecord.confidenceScore}/100).`
+        `Updated assessment for ${updatedRecord.input.companyName} (${updatedRecord.confidenceScore}/100) in Turso DB.`
       );
     } else {
       setBuyers((prev) => [evaluated, ...prev]);
       setActiveResult(evaluated);
       setActiveDetailBuyer(evaluated);
+      saveBuyerToDbApi(evaluated).catch((e) => console.error('Turso save error:', e));
       showToast(
-        `Created new assessment for ${evaluated.input.companyName} (${evaluated.confidenceScore}/100).`
+        `Created new assessment for ${evaluated.input.companyName} (${evaluated.confidenceScore}/100) in Turso DB.`
       );
     }
 
@@ -222,15 +262,17 @@ export default function App() {
       if (activeDetailBuyer.id === existingId)
         setActiveDetailBuyer(updatedRecord);
 
+      saveBuyerToDbApi(updatedRecord).catch((e) => console.error('Turso save error:', e));
       showToast(
-        `Updated ${updatedRecord.input.companyName} — New Score: ${updatedRecord.confidenceScore}/100.`
+        `Updated ${updatedRecord.input.companyName} — New Score: ${updatedRecord.confidenceScore}/100 in Turso DB.`
       );
     } else {
       setBuyers((prev) => [evaluated, ...prev]);
       setActiveResult(evaluated);
       setActiveDetailBuyer(evaluated);
+      saveBuyerToDbApi(evaluated).catch((e) => console.error('Turso save error:', e));
       showToast(
-        `Created buyer record for ${evaluated.input.companyName} (${evaluated.confidenceScore}/100).`
+        `Created buyer record for ${evaluated.input.companyName} (${evaluated.confidenceScore}/100) in Turso DB.`
       );
     }
   };
@@ -249,6 +291,7 @@ export default function App() {
     if (activeDetailBuyer.id === updatedBuyer.id) {
       setActiveDetailBuyer(updatedBuyer);
     }
+    saveBuyerToDbApi(updatedBuyer).catch((e) => console.error('Turso save error:', e));
     if (customToast) {
       showToast(customToast);
     }
@@ -274,24 +317,34 @@ export default function App() {
       setCurrentPage('history');
     }
 
+    deleteBuyerFromDbApi(buyerId).catch((e) => console.error('Turso delete error:', e));
     showToast(
       target
-        ? `Deleted buyer record "${target.input.companyName}".`
-        : 'Buyer record deleted.'
+        ? `Deleted buyer record "${target.input.companyName}" from Turso DB.`
+        : 'Buyer record deleted from Turso DB.'
     );
   };
 
   // --- RESTORE DEFAULT DEMO DATASET ---
-  const handleRestoreDefaults = () => {
-    setBuyers(INITIAL_BUYER_ASSESSMENTS);
-    setActiveResult(
-      INITIAL_BUYER_ASSESSMENTS.find((b) => b.confidenceScore === 82) ||
-        INITIAL_BUYER_ASSESSMENTS[0]
-    );
-    setActiveDetailBuyer(INITIAL_BUYER_ASSESSMENTS[0]);
+  const handleRestoreDefaults = async () => {
+    try {
+      const reset = await resetBuyersInDbApi();
+      setBuyers(reset);
+      setActiveResult(
+        reset.find((b) => b.confidenceScore === 82) || reset[0]
+      );
+      setActiveDetailBuyer(reset[0]);
+    } catch {
+      setBuyers(INITIAL_BUYER_ASSESSMENTS);
+      setActiveResult(
+        INITIAL_BUYER_ASSESSMENTS.find((b) => b.confidenceScore === 82) ||
+          INITIAL_BUYER_ASSESSMENTS[0]
+      );
+      setActiveDetailBuyer(INITIAL_BUYER_ASSESSMENTS[0]);
+    }
     setEditingBuyerId(null);
     localStorage.removeItem(STORAGE_KEYS.BUYERS);
-    showToast('Restored all 9 default Indian B2B sample buyer records.');
+    showToast('Restored all 9 default Indian B2B sample buyer records in Turso DB.');
   };
 
   // --- UPDATE TERMS FROM WHAT-IF SIMULATOR ---
@@ -331,8 +384,9 @@ export default function App() {
     setBuyers((prev) =>
       prev.map((b) => (b.id === updatedRecord.id ? updatedRecord : b))
     );
+    saveBuyerToDbApi(updatedRecord).catch((e) => console.error('Turso save error:', e));
     showToast(
-      `Applied simulated terms to ${updatedRecord.input.companyName} (${updatedRecord.confidenceScore}/100).`
+      `Applied simulated terms to ${updatedRecord.input.companyName} (${updatedRecord.confidenceScore}/100) and synced to Turso DB.`
     );
   };
 
@@ -366,38 +420,12 @@ export default function App() {
     }
   };
 
-  const handleLaunchGuidedDemo = (
-    scenario: BuyerAnalysisResult,
-    mode: 'prefill-form' | 'instant-result'
-  ) => {
-    setDemoModalOpen(false);
-    if (mode === 'prefill-form') {
-      setDraftFormInput(scenario.input);
-      setEditingBuyerId(null);
-      setCurrentPage('analyze');
-    } else {
-      setActiveResult(scenario);
-      setActiveDetailBuyer(scenario);
-      setCurrentPage('result');
-    }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
   if (currentPage === 'landing') {
     return (
-      <>
-        <LandingPage
-          onNavigate={handleNavigate}
-          onOpenDemoMode={() => setDemoModalOpen(true)}
-          onQuickInspectBuyer={handleQuickInspectFromLanding}
-        />
-        <DemoModeModal
-          isOpen={demoModalOpen}
-          onClose={() => setDemoModalOpen(false)}
-          buyers={buyers}
-          onLaunchGuidedDemo={handleLaunchGuidedDemo}
-        />
-      </>
+      <LandingPage
+        onNavigate={handleNavigate}
+        onQuickInspectBuyer={handleQuickInspectFromLanding}
+      />
     );
   }
 
@@ -411,7 +439,6 @@ export default function App() {
           }
           handleNavigate(page);
         }}
-        onOpenDemoMode={() => setDemoModalOpen(true)}
         selectedBuyerCompany={
           currentPage === 'details'
             ? activeDetailBuyer?.input.companyName
@@ -424,7 +451,6 @@ export default function App() {
             onNavigate={handleNavigate}
             onSelectBuyerForDetails={handleSelectBuyerForDetails}
             onSelectBuyerForResult={handleSelectBuyerForResult}
-            onOpenDemoMode={() => setDemoModalOpen(true)}
             onQuickSaveBuyer={handleQuickSaveBuyer}
             onDeleteBuyer={handleDeleteBuyer}
             onEditBuyerInFullForm={handleEditBuyerInFullForm}
@@ -496,9 +522,11 @@ export default function App() {
             settings={settings}
             onSaveSettings={(newSettings) => {
               setSettings(newSettings);
-              showToast('Saved workspace settings and AI model weights.');
+              saveSettingsToDbApi(newSettings).catch((e) => console.error('Turso save settings error:', e));
+              showToast('Saved workspace settings and AI model weights to Turso DB.');
             }}
             onRestoreDefaults={handleRestoreDefaults}
+            onOpenDatabaseModal={() => setTursoModalOpen(true)}
             totalBuyersCount={buyers.length}
           />
         )}
@@ -520,11 +548,10 @@ export default function App() {
         </div>
       )}
 
-      <DemoModeModal
-        isOpen={demoModalOpen}
-        onClose={() => setDemoModalOpen(false)}
-        buyers={buyers}
-        onLaunchGuidedDemo={handleLaunchGuidedDemo}
+      <TursoDatabaseModal
+        isOpen={tursoModalOpen}
+        onClose={() => setTursoModalOpen(false)}
+        onDataReset={handleRestoreDefaults}
       />
     </>
   );

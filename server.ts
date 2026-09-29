@@ -4,6 +4,17 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI } from '@google/genai';
+import {
+  initDatabase,
+  getDatabaseStatus,
+  getAllBuyersFromDb,
+  saveBuyerToDb,
+  deleteBuyerFromDb,
+  resetDatabaseToDefaults,
+  getSettingsFromDb,
+  saveSettingsToDb,
+} from './src/server/turso';
+import { INITIAL_BUYER_ASSESSMENTS } from './src/data/mockBuyers';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -23,7 +34,7 @@ function getAiClient() {
 
 async function generateWithSearchGrounding(prompt: string, systemInstruction: string) {
   const ai = getAiClient();
-  const modelsToTry = ['gemini-3.5-flash', 'gemini-3.8-flash'];
+  const modelsToTry = ['gemini-2.5-flash', 'gemini-3.8-flash', 'gemini-flash-latest', 'gemini-3.5-flash'];
   let lastError: unknown = null;
 
   for (const modelName of modelsToTry) {
@@ -130,6 +141,99 @@ async function startServer() {
       return res.status(500).json({
         error: errMessage,
       });
+    }
+  });
+
+  // --- TURSO DATABASE INIT & ENDPOINTS ---
+  try {
+    await initDatabase();
+  } catch (dbInitErr) {
+    console.error('Failed to initialize Turso database:', dbInitErr);
+  }
+
+  // GET /api/db/status — Live Turso Database Connection & Health Info
+  app.get('/api/db/status', async (_req, res) => {
+    try {
+      const status = await getDatabaseStatus();
+      res.json(status);
+    } catch (err: unknown) {
+      res.status(500).json({ error: String(err) });
+    }
+  });
+
+  // GET /api/buyers — Fetch all buyers from Turso / libSQL
+  app.get('/api/buyers', async (_req, res) => {
+    try {
+      const buyers = await getAllBuyersFromDb();
+      res.json(buyers);
+    } catch (err: unknown) {
+      console.error('Error fetching buyers from DB:', err);
+      res.status(500).json({ error: 'Failed to fetch buyers from database', details: String(err) });
+    }
+  });
+
+  // POST /api/buyers — Save or update buyer in Turso
+  app.post('/api/buyers', async (req, res) => {
+    try {
+      const buyer = req.body;
+      if (!buyer || !buyer.id || !buyer.input) {
+        return res.status(400).json({ error: 'Invalid buyer data payload' });
+      }
+      await saveBuyerToDb(buyer);
+      res.json({ success: true, buyer });
+    } catch (err: unknown) {
+      console.error('Error saving buyer to DB:', err);
+      res.status(500).json({ error: 'Failed to save buyer to database', details: String(err) });
+    }
+  });
+
+  // DELETE /api/buyers/:id — Delete buyer and associated records
+  app.delete('/api/buyers/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const deleted = await deleteBuyerFromDb(id);
+      res.json({ success: true, deleted, id });
+    } catch (err: unknown) {
+      console.error('Error deleting buyer from DB:', err);
+      res.status(500).json({ error: 'Failed to delete buyer from database', details: String(err) });
+    }
+  });
+
+  // POST /api/buyers/reset-defaults — Reset Turso database to 9 benchmark buyers
+  app.post('/api/buyers/reset-defaults', async (_req, res) => {
+    try {
+      await resetDatabaseToDefaults(INITIAL_BUYER_ASSESSMENTS);
+      const buyers = await getAllBuyersFromDb();
+      res.json({ success: true, buyers });
+    } catch (err: unknown) {
+      console.error('Error resetting buyers in DB:', err);
+      res.status(500).json({ error: 'Failed to reset buyers in database', details: String(err) });
+    }
+  });
+
+  // GET /api/settings — Get workspace settings
+  app.get('/api/settings', async (_req, res) => {
+    try {
+      const settings = await getSettingsFromDb();
+      res.json(settings);
+    } catch (err: unknown) {
+      console.error('Error fetching settings from DB:', err);
+      res.status(500).json({ error: 'Failed to fetch settings from database', details: String(err) });
+    }
+  });
+
+  // POST /api/settings — Save workspace settings
+  app.post('/api/settings', async (req, res) => {
+    try {
+      const settings = req.body;
+      if (!settings) {
+        return res.status(400).json({ error: 'Invalid settings payload' });
+      }
+      await saveSettingsToDb(settings);
+      res.json({ success: true, settings });
+    } catch (err: unknown) {
+      console.error('Error saving settings to DB:', err);
+      res.status(500).json({ error: 'Failed to save settings to database', details: String(err) });
     }
   });
 
