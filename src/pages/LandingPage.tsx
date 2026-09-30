@@ -13,7 +13,6 @@ import { PageRoute } from '../types';
 
 interface LandingPageProps {
   onNavigate: (page: PageRoute) => void;
-  onOpenDemoMode: () => void;
   onQuickInspectBuyer: (buyerId: string) => void;
 }
 
@@ -102,7 +101,6 @@ const HERO_PRESETS: HeroPreset[] = [
 
 export const LandingPage: React.FC<LandingPageProps> = ({
   onNavigate,
-  onOpenDemoMode,
   onQuickInspectBuyer,
 }) => {
   const [activePresetIndex, setActivePresetIndex] = useState(0);
@@ -175,19 +173,19 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             </button>
           </nav>
 
-          {/* Zone 3: 2 Primary Actions */}
+          {/* Zone 3: Primary Action */}
           <div className="flex items-center gap-2.5 shrink-0">
             <button
               type="button"
-              onClick={onOpenDemoMode}
-              className="px-3.5 py-2 text-xs font-semibold text-slate-800 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors whitespace-nowrap cursor-pointer"
+              onClick={() => onNavigate('dashboard')}
+              className="px-3.5 py-2 text-xs font-semibold text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors whitespace-nowrap cursor-pointer"
             >
-              Demo Mode
+              Open Workspace
             </button>
             <button
               type="button"
               onClick={() => onNavigate('analyze')}
-              className="px-4 py-2 text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-lg transition-colors whitespace-nowrap cursor-pointer"
+              className="px-4 py-2 text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-lg transition-colors whitespace-nowrap cursor-pointer shadow-xs"
             >
               Analyze a Buyer
             </button>
@@ -675,14 +673,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               className="hover:text-slate-900 cursor-pointer"
             >
               Business Insights
-            </button>
-            <button
-              type="button"
-              onClick={onOpenDemoMode}
-              className="text-sky-700 font-semibold hover:text-sky-800 inline-flex items-center gap-1 cursor-pointer"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Hackathon Demo Mode</span>
             </button>
           </div>
         </div>

@@ -4,12 +4,10 @@ import {
   Building2,
   FileCheck2,
   History,
-  Home,
   LayoutDashboard,
   Menu,
   Plus,
   Settings,
-  Sparkles,
   UserCheck,
   X,
 } from 'lucide-react';
@@ -19,7 +17,6 @@ import { BrandLogo } from '../components/BrandLogo';
 interface AppLayoutProps {
   currentPage: PageRoute;
   onNavigate: (page: PageRoute) => void;
-  onOpenDemoMode: () => void;
   selectedBuyerCompany?: string;
   children: React.ReactNode;
 }
@@ -54,7 +51,6 @@ const PAGE_LABELS: Record<PageRoute, string> = {
 export const AppLayout: React.FC<AppLayoutProps> = ({
   currentPage,
   onNavigate,
-  onOpenDemoMode,
   selectedBuyerCompany,
   children,
 }) => {
@@ -73,7 +69,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
         <div className="h-16 px-6 flex items-center justify-between border-b border-slate-800/80">
           <button
             type="button"
-            onClick={() => handleNavClick('landing')}
+            onClick={() => handleNavClick('dashboard')}
             className="text-left focus:outline-none cursor-pointer"
           >
             <BrandLogo variant="light" size="md" />
@@ -117,17 +113,6 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
               </button>
             );
           })}
-
-          <div className="pt-4 mt-4 border-t border-slate-800/80">
-            <button
-              type="button"
-              onClick={() => handleNavClick('landing')}
-              className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-400 hover:text-slate-100 hover:bg-slate-800/50 rounded-lg transition-colors cursor-pointer whitespace-nowrap"
-            >
-              <Home className="w-4 h-4 shrink-0 text-slate-400" />
-              <span>Landing Page</span>
-            </button>
-          </div>
         </nav>
 
         {/* Bottom Decision-Support Principle Box */}
@@ -136,14 +121,14 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
             Know the buyer before you commit.
           </div>
           <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">
-            AI estimates payment confidence from available signals. Prediction ≠ Guarantee.
+            AI estimates payment confidence from commercial signals. Prediction ≠ Guarantee.
           </p>
         </div>
       </aside>
 
       {/* Main Content Area */}
       <div className="flex-1 lg:pl-64 flex flex-col min-w-0">
-        {/* Top Bar Contract (Workspace Breadcrumb + Actions) */}
+        {/* Top Bar (Breadcrumb + Actions) */}
         <header className="sticky top-0 z-20 h-16 bg-white/95 backdrop-blur-xs border-b border-slate-200 px-4 sm:px-8 flex items-center justify-between gap-4">
           {/* Left: Mobile Menu Button + Breadcrumb Trail */}
           <div className="flex items-center gap-3 min-w-0">
@@ -184,22 +169,13 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
             </div>
           </div>
 
-          {/* Right: Demo Mode + Primary Action */}
+          {/* Right: Primary Action Only */}
           <div className="flex items-center gap-2.5 shrink-0">
-            <button
-              type="button"
-              onClick={onOpenDemoMode}
-              className="py-2 px-3.5 text-xs font-semibold text-slate-800 bg-slate-100 hover:bg-slate-200 border border-slate-200/80 rounded-lg transition-colors inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-sky-600" />
-              <span>Demo Mode</span>
-            </button>
-
             {currentPage !== 'analyze' && (
               <button
                 type="button"
                 onClick={() => handleNavClick('analyze')}
-                className="py-2 px-4 text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-lg transition-colors inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer"
+                className="py-2 px-4 text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-lg transition-colors inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer shadow-xs"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>Analyze Buyer</span>
@@ -257,14 +233,6 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                     </button>
                   );
                 })}
-                <button
-                  type="button"
-                  onClick={() => handleNavClick('landing')}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-400 hover:text-white rounded-lg"
-                >
-                  <Home className="w-4 h-4 shrink-0" />
-                  <span>Landing Page</span>
-                </button>
               </nav>
             </div>
           </div>

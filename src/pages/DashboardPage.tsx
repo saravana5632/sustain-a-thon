@@ -6,7 +6,6 @@ import {
   Pencil,
   Plus,
   RotateCcw,
-  Sparkles,
   Trash2,
 } from 'lucide-react';
 import { BuyerAnalysisResult, BuyerInputForm, PageRoute, RiskLevel } from '../types';
@@ -19,7 +18,6 @@ interface DashboardPageProps {
   onNavigate: (page: PageRoute) => void;
   onSelectBuyerForDetails: (buyer: BuyerAnalysisResult) => void;
   onSelectBuyerForResult: (buyer: BuyerAnalysisResult) => void;
-  onOpenDemoMode: () => void;
   onQuickSaveBuyer: (formInput: BuyerInputForm, existingId?: string) => void;
   onDeleteBuyer: (buyerId: string) => void;
   onEditBuyerInFullForm: (buyer: BuyerAnalysisResult) => void;
@@ -31,7 +29,6 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   onNavigate,
   onSelectBuyerForDetails,
   onSelectBuyerForResult,
-  onOpenDemoMode,
   onQuickSaveBuyer,
   onDeleteBuyer,
   onEditBuyerInFullForm,
@@ -45,26 +42,21 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   }>({ open: false, mode: 'create', buyer: null });
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
-  // Dynamic delta relative to the 9 baseline demo buyers
-  const deltaCount = buyers.length - 9;
+  const totalCount = buyers.length;
   const currentHigh = buyers.filter((b) => b.riskLevel === 'Low').length;
   const currentReview = buyers.filter((b) => b.riskLevel === 'Review').length;
   const currentRisk = buyers.filter((b) => b.riskLevel === 'High').length;
   const currentTotalValue = buyers.reduce(
-    (acc, b) => acc + b.input.expectedOrderValue,
+    (acc, b) => acc + (b.input.expectedOrderValue || 0),
     0
   );
 
-  // Baseline sample portfolio (248 total: 172 High, 51 Review, 25 High Risk, ₹42.8L) adjusted by live CRUD changes
   const kpis = {
-    buyersAnalyzed: Math.max(buyers.length, 248 + deltaCount),
-    highConfidence: Math.max(currentHigh, 172 + (currentHigh - 6)),
-    needsReview: Math.max(currentReview, 51 + (currentReview - 2)),
-    highRisk: Math.max(currentRisk, 25 + (currentRisk - 1)),
-    totalPotentialValue: Math.max(
-      currentTotalValue,
-      4280000 + (currentTotalValue - 3535000)
-    ),
+    buyersAnalyzed: totalCount,
+    highConfidence: currentHigh,
+    needsReview: currentReview,
+    highRisk: currentRisk,
+    totalPotentialValue: currentTotalValue,
   };
 
   const filteredBuyers = useMemo(() => {
@@ -72,9 +64,9 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
     return buyers.filter((b) => b.riskLevel === riskFilter);
   }, [buyers, riskFilter]);
 
-  const highPct = Math.round((kpis.highConfidence / kpis.buyersAnalyzed) * 100);
-  const reviewPct = Math.round((kpis.needsReview / kpis.buyersAnalyzed) * 100);
-  const riskPct = Math.max(1, 100 - highPct - reviewPct);
+  const highPct = totalCount > 0 ? Math.round((kpis.highConfidence / totalCount) * 100) : 0;
+  const reviewPct = totalCount > 0 ? Math.round((kpis.needsReview / totalCount) * 100) : 0;
+  const riskPct = totalCount > 0 ? Math.max(0, 100 - highPct - reviewPct) : 0;
 
   return (
     <div className="space-y-8">
@@ -82,13 +74,13 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
           <div className="text-xs font-medium text-slate-500">
-            Sample Workspace Overview · Illustrative B2B Pipeline Data
+            Workspace Overview · Real-time Buyer Risk Analysis
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mt-1">
-            Good morning, Business Owner
+            Buyer Risk Overview
           </h1>
           <p className="text-sm sm:text-base text-slate-600 mt-0.5">
-            Here’s your buyer risk overview.
+            Monitor buyer payment reliability and commercial risk signals.
           </p>
         </div>
 
@@ -98,18 +90,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             onClick={() =>
               setModalState({ open: true, mode: 'create', buyer: null })
             }
-            className="px-3.5 py-2 text-xs font-semibold text-white bg-sky-600 hover:bg-sky-500 rounded-lg transition-colors inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer"
+            className="px-3.5 py-2 text-xs font-semibold text-white bg-sky-600 hover:bg-sky-500 rounded-lg transition-colors inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer shadow-xs"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Quick Add Buyer</span>
-          </button>
-          <button
-            type="button"
-            onClick={onOpenDemoMode}
-            className="px-3.5 py-2 text-xs font-semibold text-slate-800 bg-white border border-slate-200 hover:bg-slate-100 rounded-lg transition-colors inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-sky-600" />
-            <span>Run Guided Demo</span>
           </button>
           <button
             type="button"
@@ -134,7 +118,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             {kpis.buyersAnalyzed}
           </div>
           <div className="text-[11px] text-slate-500 mt-1">
-            Sample workspace total
+            Total active in database
           </div>
         </div>
 
